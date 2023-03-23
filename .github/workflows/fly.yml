@@ -37,6 +37,7 @@ jobs:
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/fly'
     steps:
+      - uses: actions/checkout@v3
       - name: Download a Build Artifact
         uses: actions/download-artifact@v2.1.1
         with:
@@ -44,8 +45,7 @@ jobs:
           path: ./dist
 
       - name: Deploy to Fly.io
-        uses: actions/checkout@v3
-      - uses: superfly/flyctl-actions/setup-flyctl@master
+        uses: superfly/flyctl-actions/setup-flyctl@master
       - run: flyctl deploy --remote-only
         env:
           FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
