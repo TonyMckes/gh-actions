@@ -1,0 +1,51 @@
+name: Fly Deploy
+on:
+  push:
+    branches:
+      - fly
+jobs:
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3.4.0
+
+      - name: Setup Node
+        uses: actions/setup-node@v3.6.0
+        with:
+          node-version: 18
+
+      - name: Setup pnpm and install dependencies
+        uses: pnpm/action-setup@v2.2.4
+        with:
+          version: 7
+          run_install: true
+
+      - name: Build project
+        run: pnpm run build
+
+      - name: Upload production-ready build files
+        uses: actions/upload-artifact@v3.1.2
+        with:
+          name: production-files
+          path: ./dist
+
+  deploy:
+    name: Deploy app
+    needs: build
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/fly'
+    steps:
+      - name: Download a Build Artifact
+        uses: actions/download-artifact@v2.1.1
+        with:
+          name: production-files
+          path: ./dist
+
+      - name: Deploy to Fly.io
+        uses: actions/checkout@v3
+      - uses: superfly/flyctl-actions/setup-flyctl@master
+      - run: flyctl deploy --remote-only
+        env:
+          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
